@@ -1,1 +1,1 @@
-# proj
+# foodgram project
