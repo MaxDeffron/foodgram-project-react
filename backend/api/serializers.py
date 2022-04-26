@@ -88,7 +88,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        ingredients = data.get('ingredients')
+        ingredients = data['ingredients']
         ingredients_set = set()
         for ingredient in ingredients:
             if type(ingredient.get('amount')) is str:
@@ -115,7 +115,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                     ('Минимальное количество времени должно быть больше 0')
                 )
             ingredients_set.add(ingredient_id)
-        # data['ingredients'] = ingredients
+        data['ingredients'] = ingredients
         return data
 
     def add_tags_ingredients(self, instance, **validated_data):
