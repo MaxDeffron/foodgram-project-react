@@ -88,7 +88,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        ingredients = data['ingredients']
+        ingredients = data.pop('ingredients')
         ingredients_set = set()
         for ingredient in ingredients:
             if type(ingredient.get('amount')) is str:
