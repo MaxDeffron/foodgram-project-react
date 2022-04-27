@@ -72,7 +72,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        ingredients = data['ingredients']
+        ingredients = data.get('ingredients', None)
         ingredients_set = set()
         for ingredient in ingredients:
             if type(ingredient.get('amount')) is str:
@@ -130,6 +130,22 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         instance = self.add_tags_ingredients(
             instance, ingredients=ingredients, tags=tags)
         return super().update(instance, validated_data)
+
+
+class RecipeWriteSerializer(serializers.ModelSerializer):
+    tags = TagSerializer(many=True, read_only=True)
+    ingredients = serializers.SerializerMethodField()
+    image = Base64ImageField()
+
+    class Meta:
+        model = Recipe
+        fields = ('tags', 'ingredients', 'name',
+                  'image', 'text', 'cooking_time',)
+
+    def get_ingredients(self, obj):
+        return obj.ingredients.values(
+            'id', 'name', 'measurement_unit', amount=F('recipe__amount')
+        )
 
 
 class ShortRecipeSerializer(serializers.ModelSerializer):

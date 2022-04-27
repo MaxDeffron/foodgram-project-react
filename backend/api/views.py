@@ -1,14 +1,13 @@
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
-from django.db.models import BooleanField, Exists, F, OuterRef, Sum, Value
+from django.db.models import BooleanField, Exists, OuterRef, Sum, Value
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
-from drf_extra_fields.fields import Base64ImageField
 from recipes.models import (Cart, Favorite, Ingredient, IngredientAmount,
                             Recipe, Tag)
-from rest_framework import serializers, viewsets
+from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
@@ -20,25 +19,9 @@ from .pagination import LimitPageNumberPagination
 from .permissions import AdminOrReadOnly, AdminUserOrReadOnly
 from .serializers import (FollowSerializer, IngredientSerializer,
                           RecipeReadSerializer, ShortRecipeSerializer,
-                          TagSerializer)
+                          TagSerializer, RecipeWriteSerializer)
 
 User = get_user_model()
-
-
-class RecipeWriteSerializer(serializers.ModelSerializer):
-    tags = TagSerializer(many=True, read_only=True)
-    ingredients = serializers.SerializerMethodField()
-    image = Base64ImageField()
-
-    class Meta:
-        model = Recipe
-        fields = ('tags', 'ingredients', 'name',
-                  'image', 'text', 'cooking_time',)
-
-    def get_ingredients(self, obj):
-        return obj.ingredients.values(
-            'id', 'name', 'measurement_unit', amount=F('recipe__amount')
-        )
 
 
 class TagsViewSet(viewsets.ReadOnlyModelViewSet):
