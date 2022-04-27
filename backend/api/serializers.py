@@ -99,7 +99,6 @@ class RecipeReadSerializer(serializers.ModelSerializer):
                     ('Минимальное количество времени должно быть больше 0')
                 )
             ingredients_set.add(ingredient_id)
-        data['ingredients'] = ingredients
         return data
 
     def add_tags_ingredients(self, instance, **validated_data):
