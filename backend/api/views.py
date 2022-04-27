@@ -86,7 +86,7 @@ class FollowViewSet(UserViewSet):
         if user == author:
             return Response(
                 {'errors':
-                     'Ошибка отписки, нельзя отписываться от самого себя'},
+                    'Ошибка отписки, нельзя отписываться от самого себя'},
                 status=HTTPStatus.BAD_REQUEST)
         follow = Follow.objects.filter(user=user, author=author)
         if not follow.exists():
