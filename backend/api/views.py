@@ -5,6 +5,7 @@ from django.db.models import BooleanField, Exists, F, OuterRef, Sum, Value
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
+from drf_extra_fields.fields import Base64ImageField
 from recipes.models import (Cart, Favorite, Ingredient, IngredientAmount,
                             Recipe, Tag)
 from rest_framework import serializers, viewsets
@@ -18,8 +19,8 @@ from .filters import IngredientSearchFilter, RecipeFilter
 from .pagination import LimitPageNumberPagination
 from .permissions import AdminOrReadOnly, AdminUserOrReadOnly
 from .serializers import (CustomUserSerializer, FollowSerializer,
-                          IngredientSerializer, RecipeWriteSerializer,
-                          ShortRecipeSerializer, TagSerializer)
+                          IngredientSerializer, ShortRecipeSerializer,
+                          TagSerializer)
 
 User = get_user_model()
 
@@ -36,6 +37,22 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         fields = ('id', 'tags', 'author', 'ingredients',
                   'is_favorited', 'is_in_shopping_cart', 'name', 'image',
                   'text', 'cooking_time',)
+
+    def get_ingredients(self, obj):
+        return obj.ingredients.values(
+            'id', 'name', 'measurement_unit', amount=F('recipe__amount')
+        )
+
+
+class RecipeWriteSerializer(serializers.ModelSerializer):
+    tags = TagSerializer(many=True, read_only=True)
+    ingredients = serializers.SerializerMethodField()
+    image = Base64ImageField()
+
+    class Meta:
+        model = Recipe
+        fields = ('tags', 'ingredients', 'name',
+                  'image', 'text', 'cooking_time',)
 
     def get_ingredients(self, obj):
         return obj.ingredients.values(

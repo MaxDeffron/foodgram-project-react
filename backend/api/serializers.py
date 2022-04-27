@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.db.models import F
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from recipes.models import Ingredient, IngredientAmount, Recipe, Tag
@@ -51,22 +50,6 @@ class CustomUserSerializer(UserSerializer):
         if user.is_anonymous:
             return False
         return Follow.objects.filter(user=user, author=obj.id).exists()
-
-
-class RecipeWriteSerializer(serializers.ModelSerializer):
-    tags = TagSerializer(many=True, read_only=True)
-    ingredients = serializers.SerializerMethodField()
-    image = Base64ImageField()
-
-    class Meta:
-        model = Recipe
-        fields = ('tags', 'ingredients', 'name',
-                  'image', 'text', 'cooking_time',)
-
-    def get_ingredients(self, obj):
-        return obj.ingredients.values(
-            'id', 'name', 'measurement_unit', amount=F('recipe__amount')
-        )
 
     def validate(self, data):
         ingredients = data['ingredients']
