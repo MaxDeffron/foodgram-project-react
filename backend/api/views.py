@@ -1,24 +1,24 @@
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
-from django.db.models import BooleanField, Exists, OuterRef, Sum, Value, F
+from django.db.models import BooleanField, Exists, F, OuterRef, Sum, Value
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
-from rest_framework import viewsets
+from recipes.models import (Cart, Favorite, Ingredient, IngredientAmount,
+                            Recipe, Tag)
+from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import serializers
 
-from recipes.models import (Cart, Favorite, Ingredient, IngredientAmount,
-                            Recipe, Tag)
 from users.models import Follow
+
 from .filters import IngredientSearchFilter, RecipeFilter
 from .pagination import LimitPageNumberPagination
 from .permissions import AdminOrReadOnly, AdminUserOrReadOnly
-from .serializers import (FollowSerializer, IngredientSerializer,
-                          CustomUserSerializer, RecipeWriteSerializer,
+from .serializers import (CustomUserSerializer, FollowSerializer,
+                          IngredientSerializer, RecipeWriteSerializer,
                           ShortRecipeSerializer, TagSerializer)
 
 User = get_user_model()
