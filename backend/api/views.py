@@ -18,30 +18,11 @@ from users.models import Follow
 from .filters import IngredientSearchFilter, RecipeFilter
 from .pagination import LimitPageNumberPagination
 from .permissions import AdminOrReadOnly, AdminUserOrReadOnly
-from .serializers import (CustomUserSerializer, FollowSerializer,
-                          IngredientSerializer, ShortRecipeSerializer,
+from .serializers import (FollowSerializer, IngredientSerializer,
+                          RecipeReadSerializer, ShortRecipeSerializer,
                           TagSerializer)
 
 User = get_user_model()
-
-
-class RecipeReadSerializer(serializers.ModelSerializer):
-    tags = TagSerializer(many=True)
-    author = CustomUserSerializer()
-    ingredients = serializers.SerializerMethodField()
-    is_favorited = serializers.BooleanField(default=False)
-    is_in_shopping_cart = serializers.BooleanField(default=False)
-
-    class Meta:
-        model = Recipe
-        fields = ('id', 'tags', 'author', 'ingredients',
-                  'is_favorited', 'is_in_shopping_cart', 'name', 'image',
-                  'text', 'cooking_time',)
-
-    def get_ingredients(self, obj):
-        return obj.ingredients.values(
-            'id', 'name', 'measurement_unit', amount=F('recipe__amount')
-        )
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
