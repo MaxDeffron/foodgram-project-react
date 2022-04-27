@@ -56,7 +56,7 @@ class CustomUserSerializer(UserSerializer):
 class RecipeReadSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True)
     author = CustomUserSerializer()
-    ingredients = serializers.SerializerMethodField()
+    ingredients = serializers.SerializerMethodField(read_only=False)
     is_favorited = serializers.BooleanField(default=False)
     is_in_shopping_cart = serializers.BooleanField(default=False)
 
@@ -73,8 +73,8 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
-    tags = TagSerializer(many=True)
-    ingredients = serializers.SerializerMethodField()
+    tags = TagSerializer(many=True, read_only=True)
+    ingredients = serializers.SerializerMethodField(read_only=False)
     image = Base64ImageField()
 
     class Meta:
