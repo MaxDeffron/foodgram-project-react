@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
-from django.db.models import BooleanField, Exists, OuterRef, Sum, Value
+from django.db.models import BooleanField, Exists, OuterRef, Sum, Value, F
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
@@ -9,6 +9,7 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework import serializers
 
 from recipes.models import (Cart, Favorite, Ingredient, IngredientAmount,
                             Recipe, Tag)
@@ -17,10 +18,29 @@ from .filters import IngredientSearchFilter, RecipeFilter
 from .pagination import LimitPageNumberPagination
 from .permissions import AdminOrReadOnly, AdminUserOrReadOnly
 from .serializers import (FollowSerializer, IngredientSerializer,
-                          RecipeReadSerializer, RecipeWriteSerializer,
+                          CustomUserSerializer, RecipeWriteSerializer,
                           ShortRecipeSerializer, TagSerializer)
 
 User = get_user_model()
+
+
+class RecipeReadSerializer(serializers.ModelSerializer):
+    tags = TagSerializer(many=True)
+    author = CustomUserSerializer()
+    ingredients = serializers.SerializerMethodField()
+    is_favorited = serializers.BooleanField(default=False)
+    is_in_shopping_cart = serializers.BooleanField(default=False)
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'tags', 'author', 'ingredients',
+                  'is_favorited', 'is_in_shopping_cart', 'name', 'image',
+                  'text', 'cooking_time',)
+
+    def get_ingredients(self, obj):
+        return obj.ingredients.values(
+            'id', 'name', 'measurement_unit', amount=F('recipe__amount')
+        )
 
 
 class TagsViewSet(viewsets.ReadOnlyModelViewSet):
@@ -49,7 +69,7 @@ class FollowViewSet(UserViewSet):
         if user == author:
             return Response({
                 'errors': 'Ошибка подписки, нельзя подписываться на себя'},
-                 status=HTTPStatus.BAD_REQUEST)
+                status=HTTPStatus.BAD_REQUEST)
         if Follow.objects.filter(user=user, author=author).exists():
             return Response({
                 'errors': 'Ошибка подписки, вы уже подписаны на пользователя'},
@@ -66,7 +86,7 @@ class FollowViewSet(UserViewSet):
         if user == author:
             return Response(
                 {'errors':
-                 'Ошибка отписки, нельзя отписываться от самого себя'},
+                     'Ошибка отписки, нельзя отписываться от самого себя'},
                 status=HTTPStatus.BAD_REQUEST)
         follow = Follow.objects.filter(user=user, author=author)
         if not follow.exists():
