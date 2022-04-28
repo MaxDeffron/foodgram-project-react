@@ -71,8 +71,24 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             'id', 'name', 'measurement_unit', amount=F('recipe__amount')
         )
 
+
+class RecipeWriteSerializer(serializers.ModelSerializer):
+    tags = TagSerializer(many=True, read_only=True)
+    ingredients = serializers.SerializerMethodField()
+    image = Base64ImageField()
+
+    class Meta:
+        model = Recipe
+        fields = ('tags', 'ingredients', 'name',
+                  'image', 'text', 'cooking_time',)
+
+    def get_ingredients(self, obj):
+        return obj.ingredients.values(
+            'id', 'name', 'measurement_unit', amount=F('recipe__amount')
+        )
+
     def validate(self, data):
-        ingredients = data.get('ingredients')
+        ingredients = self.initial_data.get('ingredients')
         ingredients_set = set()
         for ingredient in ingredients:
             if type(ingredient.get('amount')) is str:
@@ -88,15 +104,6 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             if ingredient_id in ingredients_set:
                 raise serializers.ValidationError(
                     'Ингредиент не должен повторяться.'
-                )
-            if type(ingredient.get('cooking_time')) is str:
-                if not ingredient.get('cooking_time').isdigit():
-                    raise serializers.ValidationError(
-                        ('Количество минут должно быть числом')
-                    )
-            if int(ingredient.get('cooking_time')) <= 0:
-                raise serializers.ValidationError(
-                    ('Минимальное количество времени должно быть больше 0')
                 )
             ingredients_set.add(ingredient_id)
         data['ingredients'] = ingredients
@@ -130,22 +137,6 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         instance = self.add_tags_ingredients(
             instance, ingredients=ingredients, tags=tags)
         return super().update(instance, validated_data)
-
-
-class RecipeWriteSerializer(serializers.ModelSerializer):
-    tags = TagSerializer(many=True, read_only=True)
-    ingredients = serializers.SerializerMethodField()
-    image = Base64ImageField()
-
-    class Meta:
-        model = Recipe
-        fields = ('tags', 'ingredients', 'name',
-                  'image', 'text', 'cooking_time',)
-
-    def get_ingredients(self, obj):
-        return obj.ingredients.values(
-            'id', 'name', 'measurement_unit', amount=F('recipe__amount')
-        )
 
 
 class ShortRecipeSerializer(serializers.ModelSerializer):
