@@ -102,11 +102,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     ('Минимальное количество ингридиентов 1')
                 )
-            ingredient_id = ingredient.get('id')
-            if ingredient_id in ingredients_set:
-                raise serializers.ValidationError(
-                    'Ингредиент не должен повторяться.'
-                )
             if type(ingredient.get('cooking_time')) is str:
                 if not ingredient.get('cooking_time').isdigit():
                     raise serializers.ValidationError(
@@ -115,6 +110,11 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             if int(ingredient.get('cooking_time')) <= 0:
                 raise serializers.ValidationError(
                     ('Минимальное количество времени должно быть больше 0')
+                )
+            ingredient_id = ingredient.get('id')
+            if ingredient_id in ingredients_set:
+                raise serializers.ValidationError(
+                    'Ингредиент не должен повторяться.'
                 )
             ingredients_set.add(ingredient_id)
         data['ingredients'] = ingredients
@@ -141,6 +141,9 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             recipe, ingredients=ingredients, tags=tags)
 
     def update(self, instance, validated_data):
+        instance.cooking_time = validated_data.get(
+            'cooking_time', instance.cooking_time
+        )
         instance.ingredients.clear()
         instance.tags.clear()
         ingredients = validated_data.pop('ingredients')
