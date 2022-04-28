@@ -2,7 +2,6 @@ from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
 from django.db.models import BooleanField, Exists, OuterRef, Sum, Value
-
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
@@ -174,7 +173,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             for ingredient in ingredients
         ])
         filename = 'shopping_cart.txt'
-        print("shopping_cart", shopping_cart)
         response = HttpResponse(shopping_cart, content_type='text/plain')
         response['Content-Disposition'] = f'attachment; filename={filename}'
         return response
