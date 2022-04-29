@@ -127,7 +127,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         for ingredient in ingredients:
             IngredientAmount.objects.get_or_create(
                 recipe=recipe,
-                ingredients=ingredient['ingredient'],
+                ingredients=ingredients['ingredients'],
                 amount=ingredient['amount']
             )
         return recipe
@@ -135,7 +135,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def update(self, recipe, validated_data):
         tags = validated_data.get('tags')
         ingredients = validated_data.get('ingredients')
-
         recipe.image = validated_data.get(
             'image', recipe.image)
         recipe.name = validated_data.get(
@@ -144,20 +143,17 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             'text', recipe.text)
         recipe.cooking_time = validated_data.get(
             'cooking_time', recipe.cooking_time)
-
         if tags:
             recipe.tags.clear()
             recipe.tags.set(tags)
-
         if ingredients:
             recipe.ingredients.clear()
             for ingredient in ingredients:
                 IngredientAmount.objects.get_or_create(
                     recipe=recipe,
-                    ingredients=ingredient['ingredient'],
+                    ingredients=ingredients['ingredients'],
                     amount=ingredient['amount']
                 )
-
         recipe.save()
         return recipe
 
