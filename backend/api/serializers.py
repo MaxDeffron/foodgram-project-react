@@ -72,19 +72,18 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         )
 
 
-# class AddIngredientToRecipeSerializer(serializers.ModelSerializer):
-#     id = serializers.IntegerField()
-#     amount = serializers.IntegerField()
-#
-#     class Meta:
-#         model = Ingredient
-#         fields = ('id', 'amount')
+class AddIngredientToRecipeSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField()
+    amount = serializers.IntegerField()
+
+    class Meta:
+        model = Ingredient
+        fields = ('id', 'amount')
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
-    # ingredients = AddIngredientToRecipeSerializer(many=True)
-    ingredients = serializers.SerializerMethodField(many=True)
+    ingredients = AddIngredientToRecipeSerializer(many=True)
     image = Base64ImageField()
 
     class Meta:
@@ -101,6 +100,14 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         ingredients = data.get('ingredients')
         ingredients_set = set()
         for ingredient in ingredients:
+            if len(data['tags']) == 0:
+                raise serializers.ValidationError(
+                    'Минимальное количество тегов: 1'
+                )
+            if len(data['tags']) > len(set(data['tags'])):
+                raise serializers.ValidationError(
+                    'Повторяющиеся теги недопустимы'
+                )
             if type(ingredient.get('amount')) is str:
                 if not ingredient.get('amount').isdigit():
                     raise serializers.ValidationError(
