@@ -82,7 +82,7 @@ class AddIngredientToRecipeSerializer(serializers.ModelSerializer):
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
-    tags = TagSerializer(many=True, read_only=True)
+    tags = TagSerializer(many=True)
     ingredients = AddIngredientToRecipeSerializer(many=True)
     image = Base64ImageField()
 
