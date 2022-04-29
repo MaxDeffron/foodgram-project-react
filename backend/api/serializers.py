@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
+from django.db.models import F
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
@@ -21,18 +22,6 @@ class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = '__all__'
-
-
-class IngredientRecipeSerializer(serializers.ModelSerializer):
-    id = serializers.ReadOnlyField(source='ingredients.id')
-    name = serializers.ReadOnlyField(source='ingredients.name')
-    measurement_unit = serializers.ReadOnlyField(
-        source='ingredients.measurement_unit'
-    )
-
-    class Meta:
-        model = IngredientAmount
-        fields = ('id', 'name', 'measurement_unit', 'amount',)
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
@@ -79,9 +68,9 @@ class RecipeReadSerializer(serializers.ModelSerializer):
                   'text', 'cooking_time',)
 
     def get_ingredients(self, obj):
-        objects = IngredientAmount.objects.filter(recipe=obj)
-        serializer = IngredientRecipeSerializer(objects, many=True)
-        return serializer.data
+        return obj.ingredients.values(
+            'id', 'name', 'measurement_unit', amount=F('recipe__amount')
+        )
 
 
 class AddIngredientToRecipeSerializer(serializers.ModelSerializer):
@@ -94,59 +83,45 @@ class AddIngredientToRecipeSerializer(serializers.ModelSerializer):
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
-    author = CustomUserSerializer(read_only=True)
+    tags = TagSerializer(many=True, read_only=True)
     ingredients = AddIngredientToRecipeSerializer(many=True)
-    tags = serializers.PrimaryKeyRelatedField(
-        queryset=Tag.objects.all(),
-        many=True
-    )
-    image = Base64ImageField(max_length=None, use_url=True)
-    is_favorited = serializers.SerializerMethodField()
-    is_in_shopping_cart = serializers.SerializerMethodField()
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
-        fields = (
-            'id', 'tags', 'author', 'ingredients',
-            'is_favorited', 'is_in_shopping_cart',
-            'name', 'image', 'text', 'cooking_time',
+        fields = ('tags', 'ingredients', 'name',
+                  'image', 'text', 'cooking_time',)
+
+    def get_ingredients(self, obj):
+        return obj.ingredients.values(
+            'id', 'name', 'measurement_unit', amount=F('recipe__amount')
         )
 
     def validate(self, data):
-        if len(data['tags']) == 0:
-            raise serializers.ValidationError(
-                'Необходимо добавить минимум 1 тег'
-            )
-        if len(data['tags']) > len(set(data['tags'])):
-            raise serializers.ValidationError(
-                'Теги не должны повторяться!'
-            )
-        if int(data['cooking_time']) <= 0:
-            raise serializers.ValidationError(
-                'Время готовки должно быть > 0 '
-            )
-        id_ingredients = []
-        ingredients_set = data['ingredients']
-        if len(ingredients_set) == 0:
-            raise serializers.ValidationError('Заполните поле ingredients!')
-        for ingredient in ingredients_set:
-            id_ingredients.append(ingredient.get('id'))
-        if len(id_ingredients) > len(set(id_ingredients)):
-            raise serializers.ValidationError(
-                'Ингредиенты повторяются!'
-            )
-        for ingredient in ingredients_set:
-            try:
-                Ingredient.objects.get(id=ingredient['id'])
-            except Ingredient.DoesNotExist:
+        ingredients = data.get('ingredients', None)
+        ingredients_set = set()
+        for ingredient in ingredients:
+            if type(ingredient.get('amount')) is str:
+                if not ingredient.get('amount').isdigit():
+                    raise serializers.ValidationError(
+                        ('Количество ингредиента должно быть числом')
+                    )
+            if int(ingredient.get('amount')) <= 0:
                 raise serializers.ValidationError(
-                    'Такого ингредиента нет!'
+                    ('Минимальное количество ингридиентов 1')
                 )
-            amount = ingredient['amount']
-            if amount == 0:
+            if type(ingredient.get('cooking_time')) is str:
+                if not ingredient.get('cooking_time').isdigit():
+                    raise serializers.ValidationError(
+                        ('Количество минут должно быть числом')
+                    )
+            ingredient_id = ingredient.get('id')
+            if ingredient_id in ingredients_set:
                 raise serializers.ValidationError(
-                    'amount не должно быть равно 0!'
+                    'Ингредиент не должен повторяться.'
                 )
+            ingredients_set.add(ingredient_id)
+        data['ingredients'] = ingredients
         return data
 
     def ingredient_create(self, ingredient_data, recipe):
@@ -180,14 +155,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         super(RecipeWriteSerializer, self).update(instance, validated_data)
         instance.tags.set(tags_data)
         return instance
-
-    def to_representation(self, instance):
-        return RecipeReadSerializer(
-            instance,
-            context={
-                'request': self.context.get('request')
-            }
-        ).data
 
 
 class ShortRecipeSerializer(serializers.ModelSerializer):
