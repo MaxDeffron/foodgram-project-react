@@ -125,20 +125,15 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     ('Минимальное количество ингридиентов 1')
                 )
-            if type(ingredient.get('cooking_time')) is str:
+            if type(data['cooking_time']) is str:
                 if not ingredient.get('cooking_time').isdigit():
                     raise serializers.ValidationError(
                         ('Количество минут должно быть числом')
                     )
-            if int(ingredient.get('cooking_time')) <= 0:
+            if int(data['cooking_time']) <= 0:
                 raise serializers.ValidationError(
                     'Время готовки должно быть > 0 '
                 )
-            # или лучше все же так?
-            # if int(data['cooking_time']) <= 0:
-            #     raise serializers.ValidationError(
-            #         'Время готовки должно быть > 0 '
-            #     )
             ingredient_id = ingredient.get('id')
             if ingredient_id in ingredients_set:
                 raise serializers.ValidationError(
