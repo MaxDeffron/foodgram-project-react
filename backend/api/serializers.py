@@ -72,18 +72,12 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         )
 
 
-class AddIngredientToRecipeSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
-    amount = serializers.IntegerField()
-
-    class Meta:
-        model = Ingredient
-        fields = ('id', 'amount')
-
-
 class RecipeWriteSerializer(serializers.ModelSerializer):
-    tags = TagSerializer(many=True, read_only=True)
-    ingredients = AddIngredientToRecipeSerializer(many=True)
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(),
+        many=True
+    )
+    ingredients = serializers.SerializerMethodField()
     image = Base64ImageField()
 
     class Meta:
@@ -97,7 +91,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        data['tags'] = self.initial_data.get('tags')
         ingredients = data.get('ingredients', None)
         ingredients_set = set()
         for ingredient in ingredients:
