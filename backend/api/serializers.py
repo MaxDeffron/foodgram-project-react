@@ -113,7 +113,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        ingredients = data.get('ingredients', None)
+        ingredients = data.get('ingredients')
         ingredients_set = set()
         for ingredient in ingredients:
             if type(ingredient.get('amount')) is str:
@@ -170,6 +170,14 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         super(RecipeWriteSerializer, self).update(instance, validated_data)
         instance.tags.set(tags_data)
         return instance
+
+    def to_representation(self, instance):
+        return RecipeReadSerializer(
+            instance,
+            context={
+                'request': self.context.get('request')
+            }
+        ).data
 
 
 class ShortRecipeSerializer(serializers.ModelSerializer):
