@@ -82,10 +82,7 @@ class AddIngredientToRecipeSerializer(serializers.ModelSerializer):
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
-    tags = serializers.PrimaryKeyRelatedField(
-        queryset=Tag.objects.all(),
-        many=True
-    )
+    tags = TagSerializer(many=True, read_only=True)
     ingredients = AddIngredientToRecipeSerializer(many=True)
     image = Base64ImageField()
 
@@ -155,7 +152,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         recipe = super().create(validated_data)
-        recipe.tags.set(tags)
         return self.add_tags_ingredients(
             recipe, ingredients=ingredients, tags=tags)
 
@@ -170,14 +166,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         instance = self.add_tags_ingredients(
             instance, ingredients=ingredients, tags=tags)
         return super().update(instance, validated_data)
-
-    def to_representation(self, instance):
-        return RecipeReadSerializer(
-            instance,
-            context={
-                'request': self.context.get('request')
-            }
-        ).data
 
 
 class ShortRecipeSerializer(serializers.ModelSerializer):
