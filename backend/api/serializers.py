@@ -125,7 +125,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     ('Минимальное количество ингридиентов 1')
                 )
-            if type(data['cooking_time']) is str:
+            if type(ingredient.get('cooking_time')) is str:
                 if not ingredient.get('cooking_time').isdigit():
                     raise serializers.ValidationError(
                         ('Количество минут должно быть числом')
