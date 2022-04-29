@@ -151,13 +151,13 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def ingredient_create(self, ingredient_data, recipe):
         for ingredient in ingredient_data:
-            ingredient_model = get_object_or_404(
+            ingredients_model = get_object_or_404(
                 Ingredient,
                 id=ingredient['id']
             )
             amount = ingredient['amount']
             IngredientAmount.objects.create(
-                ingredient=ingredient_model,
+                ingredients=ingredients_model,
                 recipe=recipe,
                 amount=amount
             )
