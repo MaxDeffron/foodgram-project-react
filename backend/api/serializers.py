@@ -91,7 +91,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        ingredients = data.get('ingredients', None)
+        ingredients = data.get('ingredients')
         ingredients_set = set()
         for ingredient in ingredients:
             if type(ingredient.get('amount')) is str:
@@ -119,10 +119,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def add_tags_ingredients(self, instance, **validated_data):
         ingredients = validated_data['ingredients']
-        tags = validated_data['tags']
-        for tag in tags:
-            instance.tags.add(tag)
-
         for ingredient in ingredients:
             IngredientAmount.objects.create(
                 recipe=instance,
@@ -134,6 +130,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         recipe = super().create(validated_data)
+        recipe.tags.set(tags)
         return self.add_tags_ingredients(
             recipe, ingredients=ingredients, tags=tags)
 
