@@ -24,6 +24,18 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class IngredientRecipeSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField(source='ingredient.id')
+    name = serializers.ReadOnlyField(source='ingredient.name')
+    measurement_unit = serializers.ReadOnlyField(
+        source='ingredient.measurement_unit'
+    )
+
+    class Meta:
+        model = IngredientAmount
+        fields = ('id', 'name', 'measurement_unit', 'amount',)
+
+
 class CustomUserCreateSerializer(UserCreateSerializer):
     email = serializers.EmailField(
         validators=[UniqueValidator(queryset=User.objects.all())])
@@ -68,9 +80,9 @@ class RecipeReadSerializer(serializers.ModelSerializer):
                   'text', 'cooking_time',)
 
     def get_ingredients(self, obj):
-        return obj.ingredients.values(
-            'id', 'name', 'measurement_unit', amount=F('recipe__amount')
-        )
+        objects = IngredientAmount.objects.filter(recipe=obj)
+        serializer = IngredientRecipeSerializer(objects, many=True)
+        return serializer.data
 
 
 class AddIngredientToRecipeSerializer(serializers.ModelSerializer):
