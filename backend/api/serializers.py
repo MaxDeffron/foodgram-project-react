@@ -53,18 +53,6 @@ class CustomUserSerializer(UserSerializer):
         return Follow.objects.filter(user=user, author=obj.id).exists()
 
 
-class IngredientRecipeSerializer(serializers.ModelSerializer):
-    id = serializers.ReadOnlyField(source='ingredients.id')
-    name = serializers.ReadOnlyField(source='ingredients.name')
-    measurement_unit = serializers.ReadOnlyField(
-        source='ingredients.measurement_unit'
-    )
-
-    class Meta:
-        model = IngredientAmount
-        fields = ('id', 'name', 'measurement_unit', 'amount',)
-
-
 class RecipeReadSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True)
     author = CustomUserSerializer()
@@ -79,26 +67,14 @@ class RecipeReadSerializer(serializers.ModelSerializer):
                   'text', 'cooking_time',)
 
     def get_ingredients(self, obj):
-        objects = IngredientAmount.objects.filter(recipe=obj)
-        serializer = IngredientRecipeSerializer(objects, many=True)
-        return serializer.data
-
-
-class AddIngredientToRecipeSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
-    amount = serializers.IntegerField()
-
-    class Meta:
-        model = Ingredient
-        fields = ('id', 'amount')
+        return obj.ingredients.values(
+            'id', 'name', 'measurement_unit', amount=F('recipe__amount')
+        )
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
-    ingredients = AddIngredientToRecipeSerializer(many=True)
-    tags = serializers.PrimaryKeyRelatedField(
-        queryset=Tag.objects.all(),
-        many=True
-    )
+    tags = TagSerializer(many=True, read_only=True)
+    ingredients = serializers.SerializerMethodField()
     image = Base64ImageField()
 
     class Meta:
@@ -142,37 +118,48 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         data['ingredients'] = ingredients
         return data
 
-    def add_tags_ingredients(self, instance, **validated_data):
-        ingredients = validated_data['ingredients']
-        tags = validated_data['tags']
-        for tag in tags:
-            instance.tags.add(tag)
-
-        for ingredient in ingredients:
-            IngredientAmount.objects.create(
-                recipe=instance,
-                ingredients_id=ingredient.get('id'),
-                amount=ingredient.get('amount'))
-        return instance
-
     def create(self, validated_data):
-        ingredients = validated_data.pop('ingredients')
+        image = validated_data.pop('image')
         tags = validated_data.pop('tags')
-        recipe = super().create(validated_data)
-        return self.add_tags_ingredients(
-            recipe, ingredients=ingredients, tags=tags)
+        ingredients = validated_data.pop('ingredients')
+        recipe = Recipe.objects.create(image=image, **validated_data)
+        recipe.tags.set(tags)
+        for ingredient in ingredients:
+            IngredientAmount.objects.get_or_create(
+                recipe=recipe,
+                ingredients=ingredient['ingredient'],
+                amount=ingredient['amount']
+            )
+        return recipe
 
-    def update(self, instance, validated_data):
-        instance.cooking_time = validated_data.get(
-            'cooking_time', instance.cooking_time
-        )
-        instance.ingredients.clear()
-        instance.tags.clear()
-        ingredients = validated_data.pop('ingredients')
-        tags = validated_data.pop('tags')
-        instance = self.add_tags_ingredients(
-            instance, ingredients=ingredients, tags=tags)
-        return super().update(instance, validated_data)
+    def update(self, recipe, validated_data):
+        tags = validated_data.get('tags')
+        ingredients = validated_data.get('ingredients')
+
+        recipe.image = validated_data.get(
+            'image', recipe.image)
+        recipe.name = validated_data.get(
+            'name', recipe.name)
+        recipe.text = validated_data.get(
+            'text', recipe.text)
+        recipe.cooking_time = validated_data.get(
+            'cooking_time', recipe.cooking_time)
+
+        if tags:
+            recipe.tags.clear()
+            recipe.tags.set(tags)
+
+        if ingredients:
+            recipe.ingredients.clear()
+            for ingredient in ingredients:
+                IngredientAmount.objects.get_or_create(
+                    recipe=recipe,
+                    ingredients=ingredient['ingredient'],
+                    amount=ingredient['amount']
+                )
+
+        recipe.save()
+        return recipe
 
 
 class ShortRecipeSerializer(serializers.ModelSerializer):
