@@ -64,7 +64,7 @@ POSTGRES_PASSWORD - postgres (по умолчанию)
 ```
 ## Bon appetit !
 
-Для загрузки своих ингредиентов, вам нужно в папке backend оставить файл ingredients.json, наполненный вашими ингредиентами. Они заполняются после выполнения миграции (data migration).
+Для загрузки своих ингредиентов, вам нужно в папке data заменить файл ingredients.json, наполненный вашими ингредиентами. Они заполняются после выполнения миграции (data migration).
 
 ### *Backend by:*
 https://github.com/deffronmax
