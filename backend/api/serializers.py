@@ -88,7 +88,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ('tags', 'ingredients', 'name',
+        fields = ('author', 'tags', 'ingredients', 'name',
                   'image', 'text', 'cooking_time')
 
     def get_ingredients(self, obj):
@@ -100,15 +100,15 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         ingredients = data.get('ingredients', None)
         ingredients_set = set()
         for ingredient in ingredients:
-            # if type(data['ingredients.amount']) is str:
-            #     if not ingredient.get('ingredients.amount').isdigit():
-            #         raise serializers.ValidationError(
-            #             ('Количество ингредиента должно быть числом')
-            #         )
-            # if int(data['amount']) <= 0:
-            #     raise serializers.ValidationError(
-            #         ('Минимальное количество ингридиентов 1')
-            #     )
+            if type(ingredient.get('amount')) is str:
+                if not ingredient.get('amount').isdigit():
+                    raise serializers.ValidationError(
+                        ('Количество ингредиента должно быть числом')
+                    )
+            if int(ingredient.get('amount')) <= 0:
+                raise serializers.ValidationError(
+                    ('Минимальное количество ингридиентов 1')
+                )
             if int(data['cooking_time']) <= 0:
                 raise serializers.ValidationError(
                     'Время готовки должно быть > 0 '
