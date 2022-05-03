@@ -102,12 +102,12 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         ingredients = data.get('ingredients', None)
         ingredients_set = set()
         for ingredient in ingredients:
-            if type(ingredient.get('amount')) is str:
-                if not ingredient.get('amount').isdigit():
+            if type(ingredient.get('measurement_unit')) is str:
+                if not ingredient.get('measurement_unit').isdigit():
                     raise serializers.ValidationError(
                         ('Количество ингредиента должно быть числом')
                     )
-            if int(ingredient.get('amount')) <= 0:
+            if int(ingredient.get('measurement_unit')) <= 0:
                 raise serializers.ValidationError(
                     ('Минимальное количество ингридиентов 1')
                 )
