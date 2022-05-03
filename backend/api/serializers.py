@@ -23,6 +23,15 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class AddIngredientToRecipeSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField()
+    amount = serializers.IntegerField()
+
+    class Meta:
+        model = Ingredient
+        fields = ('id', 'amount')
+
+
 class CustomUserCreateSerializer(UserCreateSerializer):
     email = serializers.EmailField(
         validators=[UniqueValidator(queryset=User.objects.all())])
@@ -74,7 +83,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
-    ingredients = IngredientSerializer(many=True, read_only=False)
+    ingredients = AddIngredientToRecipeSerializer(many=True)
     image = Base64ImageField()
 
     class Meta:
