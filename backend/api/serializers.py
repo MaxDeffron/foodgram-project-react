@@ -73,8 +73,8 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
-    tags = TagSerializer(many=True, read_only=True)
-    ingredients = serializers.SerializerMethodField()
+    tags = TagSerializer(many=True, read_only=False)
+    ingredients = IngredientSerializer(many=True, read_only=False)
     image = Base64ImageField()
 
     class Meta:

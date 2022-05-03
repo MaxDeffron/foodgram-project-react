@@ -6,7 +6,7 @@ from django.db import transaction
 
 def add_ingridients(apps, schema_editor):
     Ingredient = apps.get_model('recipes', 'Ingredient')
-    json_file_path = ('data/ingredients.json')
+    json_file_path = ('../data/ingredients.json')
 
     with open(json_file_path, encoding='utf-8') as f:
         data = json.load(f)
