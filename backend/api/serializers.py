@@ -85,7 +85,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     ingredients = AddIngredientToRecipeSerializer(many=True)
     image = Base64ImageField()
-    author = UserSerializer(read_only=True)
 
     class Meta:
         model = Recipe
@@ -139,7 +138,11 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = self.initial_data.get('tags')
-        recipe = super().create(validated_data)
+        # recipe = super().create(validated_data)
+        recipe = Recipe.objects.create(
+            **validated_data,
+            author=self.context.get('request').user
+        )
         return self.add_tags_ingredients(
             recipe, ingredients=ingredients, tags=tags)
 
