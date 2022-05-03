@@ -26,7 +26,6 @@ class IngredientSerializer(serializers.ModelSerializer):
 class AddIngredientToRecipeSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
     ingredient = serializers.ReadOnlyField(source='ingredient.name')
-    measurement_unit = serializers.IntegerField()
 
     class Meta:
         model = Ingredient
@@ -90,7 +89,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('tags', 'ingredients', 'name',
-                  'image', 'text', 'cooking_time',)
+                  'image', 'text', 'cooking_time')
 
     def get_ingredients(self, obj):
         return obj.ingredients.values(
