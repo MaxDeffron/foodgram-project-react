@@ -26,10 +26,12 @@ class IngredientSerializer(serializers.ModelSerializer):
 class AddIngredientToRecipeSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
     ingredient = serializers.ReadOnlyField(source='ingredient.name')
+    amount = serializers.IntegerField(
+        source='ingredient.amount')
 
     class Meta:
-        model = Ingredient
-        fields = ['id', 'ingredient', 'measurement_unit']
+        model = IngredientAmount
+        fields = ['id', 'ingredient', 'amount']
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
@@ -89,7 +91,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('tags', 'ingredients', 'name',
-                  'image', 'text', 'cooking_time')
+                  'image', 'text', 'cooking_time', 'amount')
 
     def get_ingredients(self, obj):
         return obj.ingredients.values(
@@ -100,12 +102,12 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         ingredients = data.get('ingredients', None)
         ingredients_set = set()
         for ingredient in ingredients:
-            if type(data['measurement_unit']) is str:
-                if not ingredient.get('measurement_unit').isdigit():
+            if type(data['amount']) is str:
+                if not ingredient.get('amount').isdigit():
                     raise serializers.ValidationError(
                         ('Количество ингредиента должно быть числом')
                     )
-            if int(data['measurement_unit']) <= 0:
+            if int(data['amount']) <= 0:
                 raise serializers.ValidationError(
                     ('Минимальное количество ингридиентов 1')
                 )
