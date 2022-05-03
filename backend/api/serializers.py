@@ -89,7 +89,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('tags', 'ingredients', 'name',
-                  'image', 'text', 'cooking_time')
+                  'image', 'text', 'cooking_time', 'amount')
 
     def get_ingredients(self, obj):
         return obj.ingredients.values(
