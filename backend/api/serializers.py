@@ -119,7 +119,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                     'Ингредиент не должен повторяться.'
                 )
             ingredients_set.add(ingredient_id)
-        # data['ingredients'] = ingredients
+        data['ingredients'] = ingredients
         return data
 
     def add_tags_ingredients(self, instance, **validated_data):
@@ -142,6 +142,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             **validated_data,
             author=self.context.get('request').user
         )
+        recipe.tags.set(tags)
         return self.add_tags_ingredients(
             recipe, ingredients=ingredients, tags=tags)
 
@@ -153,6 +154,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         instance.tags.clear()
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
+        instance.tags.set(tags)
         instance = self.add_tags_ingredients(
             instance, ingredients=ingredients, tags=tags)
         return super().update(instance, validated_data)
